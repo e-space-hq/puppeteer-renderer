@@ -8,7 +8,7 @@ class Renderer {
   }
 
   async createPage(url, options = {}) {
-    const { timeout, waitUntil, credentials, emulateMedia } = options
+    const { timeout, waitUntil, waitFor, waitForSelector, credentials, emulateMedia } = options
     const page = await this.browser.newPage()
     if (emulateMedia) {
       await page.emulateMedia(emulateMedia);
@@ -22,6 +22,15 @@ class Renderer {
       timeout: Number(timeout) || 30 * 1000,
       waitUntil: waitUntil || 'networkidle2',
     })
+    
+    if (waitFor) {
+      await page.waitFor(Number(waitFor)); 
+    }
+    
+    if (waitForSelector) {
+      await page.waitForSelector(waitForSelector);
+    }
+    
     return page
   }
 
