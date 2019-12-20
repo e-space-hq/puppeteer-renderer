@@ -37,8 +37,7 @@ class Renderer {
   async render(url, options = {}) {
     let page = null
     try {
-      const { timeout, waitUntil, credentials } = options
-      page = await this.createPage(url, { timeout, waitUntil, credentials })
+      page = await this.createPage(url, options)
       const html = await page.content()
       return html
     } finally {
@@ -51,12 +50,11 @@ class Renderer {
   async pdf(url, options = {}) {
     let page = null
     try {
-      const { timeout, waitUntil, credentials, ...extraOptions } = options
-      page = await this.createPage(url, { timeout, waitUntil, credentials, emulateMedia: 'print' })
+      page = await this.createPage(url, { ...options, emulateMedia: 'print' })
 
-      const { scale = 1.0, displayHeaderFooter, printBackground, landscape } = extraOptions
+      const { scale = 1.0, displayHeaderFooter, printBackground, landscape, ...restOptions } = options
       const buffer = await page.pdf({
-        ...extraOptions,
+        ...restOptions,
         scale: Number(scale),
         displayHeaderFooter: displayHeaderFooter === 'true',
         printBackground: printBackground === 'true',
@@ -72,15 +70,14 @@ class Renderer {
 
   async screenshot(url, options = {}) {
     let page = null
-    try {
-      const { timeout, waitUntil, credentials, ...extraOptions } = options
-      page = await this.createPage(url, { timeout, waitUntil, credentials })
+    try {    
+      page = await this.createPage(url, options)
       page.setViewport({
-        width: Number(extraOptions.width || 800),
-        height: Number(extraOptions.height || 600),
+        width: Number(options.width || 800),
+        height: Number(options.height || 600),
       })
 
-      const { fullPage, omitBackground, screenshotType, quality, ...restOptions } = extraOptions
+      const { fullPage, omitBackground, screenshotType, quality, ...restOptions } = options
       const buffer = await page.screenshot({
         ...restOptions,
         type: screenshotType || 'png',
@@ -106,9 +103,10 @@ class Renderer {
 }
 
 async function create(options = {}) {
-  const browser = await puppeteer.launch(
-    Object.assign({args: ['--no-sandbox']}, options)
-  )
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    ...options,
+  })
   return new Renderer(browser)
 }
 
