@@ -105,6 +105,11 @@ class Renderer {
 async function create(options = {}) {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    defaultViewport: {
+      width: 1280,
+      height: 1000,
+      deviceScaleFactor: 2,
+    },
     ...options,
   })
   return new Renderer(browser)
