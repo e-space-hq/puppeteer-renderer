@@ -18,7 +18,6 @@ app.disable('x-powered-by')
 
 // Render url.
 app.use(async (req, res, next) => {
-  console.log(req.query)
   let { url, type, filename, ...options } = req.query
 
   if (!url) {
@@ -45,12 +44,13 @@ app.use(async (req, res, next) => {
         if(!filename.toLowerCase().endsWith('.pdf')) {
           filename += '.pdf';
         }
-        const pdf = await renderer.pdf(url, options)
+        const { contentDispositionType, ...pdfOptions } = options
+        const pdf = await renderer.pdf(url, pdfOptions)
         res
           .set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdf.length,
-            'Content-Disposition': contentDisposition(filename),
+            'Content-Disposition': contentDisposition(filename, { type: contentDispositionType || 'attachment' }),
           })
           .send(pdf)
         break

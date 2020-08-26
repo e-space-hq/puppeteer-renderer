@@ -1,6 +1,7 @@
 'use strict'
 
 const puppeteer = require('puppeteer')
+const waitForAnimations = require('./wait-for-animations')
 
 class Renderer {
   constructor(browser) {
@@ -8,10 +9,10 @@ class Renderer {
   }
 
   async createPage(url, options = {}) {
-    const { timeout, waitUntil, waitFor, waitForSelector, credentials, emulateMedia } = options
+    const { timeout, waitUntil, waitFor, waitForSelector, credentials, emulateMedia = 'print' } = options
     const page = await this.browser.newPage()
     if (emulateMedia) {
-      await page.emulateMedia(emulateMedia);
+      await page.emulateMedia(emulateMedia)
     }
 
     if (credentials) {
@@ -22,15 +23,15 @@ class Renderer {
       timeout: Number(timeout) || 30 * 1000,
       waitUntil: waitUntil || 'networkidle2',
     })
-    
+
     if (waitFor) {
-      await page.waitFor(Number(waitFor)); 
+      await page.waitFor(Number(waitFor));
     }
-    
+
     if (waitForSelector) {
       await page.waitForSelector(waitForSelector);
     }
-    
+
     return page
   }
 
@@ -50,7 +51,7 @@ class Renderer {
   async pdf(url, options = {}) {
     let page = null
     try {
-      page = await this.createPage(url, { ...options, emulateMedia: 'print' })
+      page = await this.createPage(url, options)
 
       const { scale = 1.0, displayHeaderFooter, printBackground, landscape, ...restOptions } = options
       const buffer = await page.pdf({
@@ -70,7 +71,7 @@ class Renderer {
 
   async screenshot(url, options = {}) {
     let page = null
-    try {    
+    try {
       page = await this.createPage(url, options)
       page.setViewport({
         width: Number(options.width || 800),
@@ -78,14 +79,21 @@ class Renderer {
       })
 
       const { fullPage, omitBackground, screenshotType, quality, ...restOptions } = options
-      const buffer = await page.screenshot({
+      let screenshotOptions = {
         ...restOptions,
         type: screenshotType || 'png',
         quality:
           Number(quality) || (screenshotType === undefined || screenshotType === 'png' ? 0 : 100),
         fullPage: fullPage === 'true',
         omitBackground: omitBackground === 'true',
-      })
+      }
+
+      const animationTimeout = Number(options.animationTimeout || 0)
+      if (animationTimeout > 0) {
+        await waitForAnimations(page, screenshotOptions, animationTimeout)
+      }
+
+      const buffer = await page.screenshot(screenshotOptions)
       return {
         screenshotType,
         buffer,
