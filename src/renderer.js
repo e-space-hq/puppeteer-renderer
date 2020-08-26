@@ -12,7 +12,7 @@ class Renderer {
     const { timeout, waitUntil, waitFor, waitForSelector, credentials, emulateMedia = 'print' } = options
     const page = await this.browser.newPage()
     if (emulateMedia) {
-      await page.emulateMedia(emulateMedia)
+      await page.emulateMediaType(emulateMedia)
     }
 
     if (credentials) {
